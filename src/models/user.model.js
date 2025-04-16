@@ -54,6 +54,7 @@ const userSchema = new Schema({
     },
     RoomNumber:{
         type:String,
+        default:"000",
         required:true,
         trim:true,
     }   
