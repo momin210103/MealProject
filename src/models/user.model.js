@@ -41,12 +41,7 @@ const userSchema = new Schema({
         required:[true,'Password is required']
     
     },
-    phoneNumber:{
-        type:String,
-        required:true,
-        unique:true,
-        trim:true,
-    },
+   
     Role:{
         type:String,
         enum:["admin","user"],
@@ -55,7 +50,6 @@ const userSchema = new Schema({
     RoomNumber:{
         type:String,
         default:"000",
-        required:true,
         trim:true,
     }   
 

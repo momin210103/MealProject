@@ -14,6 +14,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // remove password from refresh token from resposne
     // check for user creation
     // return response
+    // console.log('req.body: ', req.body);
+    // console.log('req.files: ', req.files);
 
     //? Logic system
 
@@ -41,7 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }*/
 
         //! check user already exits
-       const existendUser =  User.findOne({
+       const existendUser =  await User.findOne({
             $or:[{ email }]
         })
         if(existendUser){
@@ -57,10 +59,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
         //! upload cloudinary
+        //console.log("avatarLocalPath: ",avatarLocalPath);
+
         const avatar = await uploadOnCloudinary(avatarLocalPath)
+        //console.log("avatar: ",avatar);
 
         if(!avatar){
-            throw new ApiError(400,"Image required")
+            throw new ApiError(400,"Avatar file is required")
         }
 
        const user = await User.create({
@@ -83,16 +88,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
 
-
-
-
-
-
-
         return res.status(201).json(
             new ApiResponse(200,createdUser,"User Register successfully")
         )
 
 })
 
-export { registerUser, }
+export { registerUser, };
