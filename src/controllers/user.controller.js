@@ -14,7 +14,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // remove password from refresh token from resposne
     // check for user creation
     // return response
-    // console.log('req.body: ', req.body);
+    console.log('req.body: ', req.body);
     // console.log('req.files: ', req.files);
 
     //? Logic system
@@ -82,11 +82,6 @@ const registerUser = asyncHandler(async (req, res) => {
         if(!createdUser){
             throw new ApiError(500,"Some thing went wrong while creating register")
         }
-
-
-    
-
-
 
         return res.status(201).json(
             new ApiResponse(200,createdUser,"User Register successfully")
