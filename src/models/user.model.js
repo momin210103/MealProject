@@ -27,7 +27,6 @@ const userSchema = new Schema({
     },
     avatar:{
         type:String, // cloudary url
-        required: true,
     },
     mealHistory:[
         {
@@ -50,9 +49,13 @@ const userSchema = new Schema({
     RoomNumber:{
         type:String,
         default:"000",
-        trim:true,
-    }   
-
+        
+    },
+    phoneNumber:{
+        type:String,
+        default:"000123254",
+        
+    },
 },{timestamps:true});
 
 userSchema.pre("save",async function(next){

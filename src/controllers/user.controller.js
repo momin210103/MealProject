@@ -20,7 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //? Logic system
 
     const {fullName,email,username,password}=req.body
-    console.log("email: ",email);
+    // console.log("email: ",email);
     if([fullName,email,username,password].some((field)=>
         field?.trim() === "" )
     ) {
@@ -51,26 +51,26 @@ const registerUser = asyncHandler(async (req, res) => {
         }
 
         //! image and check image
-       const avatarLocalPath = req.files?.avatar[0]?.path 
+    //    const avatarLocalPath = req.files?.avatar[0]?.path 
 
-       if(!avatarLocalPath){
-            throw new ApiError(400,"Image is required")
-        }
+    //    if(!avatarLocalPath){
+    //         throw new ApiError(400,"Image is required")
+    //     }
 
 
         //! upload cloudinary
         //console.log("avatarLocalPath: ",avatarLocalPath);
 
-        const avatar = await uploadOnCloudinary(avatarLocalPath)
+        // const avatar = await uploadOnCloudinary(avatarLocalPath)
         //console.log("avatar: ",avatar);
 
-        if(!avatar){
-            throw new ApiError(400,"Avatar file is required")
-        }
+        // if(!avatar){
+        //     throw new ApiError(400,"Avatar file is required")
+        // }
 
        const user = await User.create({
             fullName,
-            avatar: avatar.url,
+            // avatar: avatar.url,
             email,
             username: username.toLowerCase(),
             password
