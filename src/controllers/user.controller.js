@@ -116,7 +116,9 @@ const loginUser = asyncHandler(async (req, res) => {
     // access and refresh token generation
     // send cookies
     // console.log("req.body: ", req.body);
-    
+    // console.log("Request body:", req.body);
+    console.log("Email:", req.body.email);
+    console.log("Password:", req.body.password);
 
     const {email,password}=req.body
     if(!email){
@@ -140,7 +142,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly:true,
-        secure:true,
+        secure:false,
+        sameSite:"lax"
     }
 
     return res
@@ -191,7 +194,7 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
 
     try {
         const decodedToken = jwt.verify(
-            incomingRefreshToken.process.env.REFRESH_TOKEN_SECRET
+            incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET
         )
         const user = await User.findById(decodedToken?._id)
         if(!user){
@@ -230,4 +233,20 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
     }
 })
 
-export { registerUser, loginUser,logoutUser,refreshAccessToken};
+const getCurrentUser = asyncHandler(async(req,res) =>{
+    if(!req.user){
+        throw new ApiError(404, "User not found");
+    }
+    return res.status(200).json(
+        new ApiResponse(200, req.user, "User fetched successfully")
+    )
+
+})
+
+export { 
+    registerUser, 
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    getCurrentUser,
+};

@@ -1,24 +1,40 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser, refreshAccessToken} from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser, refreshAccessToken,getCurrentUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { User } from "../models/user.model.js"; // Import User model
 
-const router = Router();
-router.route("/register").post(
+const userRouter = Router();
+
+// POST /register route
+userRouter.route("/register").post(
     upload.fields([
         {
             name: "avatar",
             maxCount: 1,
         },
-        
     ]),
     registerUser
-)
+);
 
-router.route("/login").post(loginUser)
+// GET / route to fetch all users
+userRouter.route("/register").get(async (req, res) => {
+    try {
+        const users = await User.find().select("-password -refreshToken");
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch users", error: error.message });
+    }
+});
 
-//secure route
-router.route("/logoutUser").post(verifyJWT,logoutUser)
-router.route("/refreshToken").post(refreshAccessToken)
+// POST /login route
+userRouter.route("/login").post(loginUser);
 
-export default router;
+userRouter.route("/me").get(verifyJWT, getCurrentUser);
+
+
+// Secure routes
+userRouter.route("/logoutUser").post(verifyJWT, logoutUser);
+userRouter.route("/refreshToken").post(refreshAccessToken);
+
+export default userRouter;

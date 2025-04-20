@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN, //'http://localhost:5173',
+    origin:'http://localhost:5173',
     credentials: true,
 
 }))
@@ -19,6 +19,9 @@ app.use(cookieParser())
 import userRouter from "./routes/user.routes.js"
 
 //routes declaration
+app.get("/", (req, res) => {
+    res.send("Welcome to the Meal Project API!");
+});
 app.use("/api/v1/users", userRouter)
 
 
