@@ -8,7 +8,7 @@ const mealSchema = new Schema({
     },
     mealType:{
         type:String,
-        enum:["breakfast","lunch","dinner","Feast"],
+        enum:["breakfast","lunch","dinner",],
         required:true,
     },
     mealDescription:{
