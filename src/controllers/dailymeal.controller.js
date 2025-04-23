@@ -18,3 +18,11 @@ export const saveMealSelection = async (req, res) => {
     res.status(500).json({ message: "❌ Failed to save selection", error: err.message });
   }
 };
+export const getMealSelection = async (req, res) => {
+  try {
+    const meals = await UserMealSelection.find({ userId: req.user.id });
+    res.status(200).json(meals);
+  } catch (err) {
+    res.status(500).json({ message: "❌ Failed to fetch meal selections", error: err.message });
+  }
+};

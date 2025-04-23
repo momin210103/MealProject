@@ -3,7 +3,7 @@ import { loginUser, logoutUser, registerUser, refreshAccessToken,getCurrentUser 
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { User } from "../models/user.model.js"; // Import User model
-import { saveMealSelection  } from "../controllers/dailymeal.controller.js";
+import { saveMealSelection,getMealSelection } from "../controllers/dailymeal.controller.js";
 
 const userRouter = Router();
 
@@ -31,6 +31,7 @@ userRouter.route("/register").get(async (req, res) => {
 // POST /login route
 userRouter.route("/login").post(loginUser);
 userRouter.route("/dailymeal").post(verifyJWT, saveMealSelection)
+userRouter.route("/dailymeal").get(verifyJWT, getMealSelection);
 
 userRouter.route("/me").get(verifyJWT, getCurrentUser);
 
