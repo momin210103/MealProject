@@ -1,6 +1,11 @@
 import { UserMealSelection } from "../models/usermealselection.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { User } from "../models/user.model.js";
+import { Meal } from "../models/meal.model.js";
 
-export const saveMealSelection = async (req, res) => {
+const saveMealSelection = asyncHandler(async (req, res) => {
   const { breakfast, lunch, dinner } = req.body.selection;
   const selectionDate = new Date(req.body.date);
   console.log(req.body.selection);
@@ -12,17 +17,49 @@ export const saveMealSelection = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     
-
-    res.status(200).json({ message: "✅ Meal selection saved", data: result });
+    return res.status(200).json(
+      new ApiResponse(200, result, "Meal selection saved successfully")
+    );
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to save selection", error: err.message });
+    throw new ApiError(500, err.message || "Failed to save selection");
   }
-};
-export const getMealSelection = async (req, res) => {
+});
+
+const getMealSelection = asyncHandler(async (req, res) => {
   try {
     const meals = await UserMealSelection.find({ userId: req.user.id });
-    res.status(200).json(meals);
+    return res.status(200).json(
+      new ApiResponse(200, meals, "Meal selections fetched successfully")
+    );
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to fetch meal selections", error: err.message });
+    throw new ApiError(500, err.message || "Failed to fetch meal selections");
   }
+});
+
+const getMealPlan = asyncHandler(async (req, res) => {
+    try {
+        if (!req.user) {
+            throw new ApiError(401, "User not authenticated");
+        }
+
+        const user = await User.findById(req.user._id)
+            .populate('mealHistory')
+            .select("-password -refreshToken");
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, user.mealHistory, "Meal plan fetched successfully")
+        );
+    } catch (error) {
+        throw new ApiError(error.statusCode || 500, error.message || "Error fetching meal plan");
+    }
+});
+
+export {
+    saveMealSelection,
+    getMealSelection,
+    getMealPlan
 };

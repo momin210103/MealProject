@@ -4,24 +4,32 @@ import {User} from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import crypto from "crypto"
+import nodemailer from "nodemailer"; 
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
-        const user = await User.findByIdAndUpdate(userId)
-        // console.log("Fetched User:", user);
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
-    
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found while generating tokens");
+        }
 
-        user.refreshToken = refreshToken
+        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+            throw new ApiError(500, "Server configuration error - Token secrets not defined");
+        }
 
-        await user.save({validateBeforeSave: false}) // corrected 'validdateBeforeSave' to 'validateBeforeSave'
-        return {accessToken, refreshToken}
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
 
-    }catch (error) {
-        throw new ApiError(500,"Error while generating access and refresh token")   
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        console.error("Token Generation Error:", error);
+        throw new ApiError(500, "Error while generating access and refresh token");
     }
-}
+};
 
 const registerUser = asyncHandler(async (req, res) => {
     // get user details from frontend
@@ -33,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // remove password from refresh token from resposne
     // check for user creation
     // return response
-    console.log('req.body: ', req.body);
+    //console.log('req.body: ', req.body);
     // console.log('req.files: ', req.files);
 
     //? Logic system
@@ -68,6 +76,10 @@ const registerUser = asyncHandler(async (req, res) => {
         if(existendUser){
             throw new ApiError(409,"Email already exists")
         }
+        //verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+        const verificationCodeExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
 
         //! image and check image
     //    const avatarLocalPath = req.files?.avatar[0]?.path 
@@ -92,11 +104,34 @@ const registerUser = asyncHandler(async (req, res) => {
             // avatar: avatar.url,
             email,
             username: username.toLowerCase(),
-            password
+            password,
+            verificationCode,
+            verificationCodeExpires,
 
         })
 
         const createdUser = await User.findById(user._id).select("-password -refreshToken ")
+
+        const transporter = nodemailer.createTransport({
+           service:"Gmail",
+           auth:{
+            user:process.env.EMAIL_USER,
+            pass:process.env.EMAIL_PASS
+           }
+        })
+        const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+        const verificationLink = `${CLIENT_URL}/verify-email?email=${email}&code=${verificationCode}`
+
+       await transporter.sendMail({
+        from:'"MealPlaner"<momincse13@gmail.com>',
+        to: email,
+        subject: "Email Verification",
+        html: `<p>Hello ${fullName},</p>
+               <p>Your verification code is: <b>${verificationCode}</b></p>
+               <p>Click <a href="${verificationLink}">here</a> to verify your email.</p>`,
+    
+    });
+            
 
         if(!createdUser){
             throw new ApiError(500,"Some thing went wrong while creating register")
@@ -107,6 +142,46 @@ const registerUser = asyncHandler(async (req, res) => {
         )
 
 })
+
+
+const verifyEmail = asyncHandler(async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        if (!email || !code) {
+            throw new ApiError(400, "Email or verification code missing");
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        if (!user.verificationCode) {
+            throw new ApiError(400, "No verification code found for this user");
+        }
+
+        if (user.verificationCode !== code) {
+            throw new ApiError(400, "Invalid verification code");
+        }
+
+        if (user.verificationCodeExpires < new Date()) {
+            throw new ApiError(400, "Verification code has expired. Please request a new one.");
+        }
+
+        user.isVerified = true;
+        user.verificationCode = null;
+        user.verificationCodeExpires = null;
+        await user.save();
+
+        res.status(200).json(new ApiResponse(200, null, "Email verified successfully!"));
+    } catch (error) {
+        console.error("Email verification error:", error);
+        throw error;
+    }
+});
+
 
 const loginUser = asyncHandler(async (req, res) => {
     // get user details from body
@@ -131,6 +206,9 @@ const loginUser = asyncHandler(async (req, res) => {
     if(!user){
         throw new ApiError(404,"User not found")
     }
+    if(!user.isVerified){
+        throw new ApiError(401,"Please verify your email first")
+    }
     const isPasswordValid = await user.isPasswordCorrect(password)
     if(!isPasswordValid){
         throw new ApiError(401,"Invalid password")
@@ -142,8 +220,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly:true,
-        secure:false,
-        sameSite:"lax"
+        secure: false,
+        sameSite:"lax",
+        maxAge:7* 24 * 60 * 60  * 1000
     }
 
     return res
@@ -189,7 +268,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshAccessToken = asyncHandler(async(req, res)=>{
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.query.refreshToken 
-    if(incomingRefreshToken){
+    if(!incomingRefreshToken){
         throw new ApiError(401,"Unthorized request")
     }
 
@@ -244,10 +323,38 @@ const getCurrentUser = asyncHandler(async(req,res) =>{
 
 })
 
+const saveTimerSettings = asyncHandler(async (req, res) => {
+    try {
+        const { timerSettings } = req.body;
+        
+        if (!req.user) {
+            throw new ApiError(401, "User not authenticated");
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: { timerSettings } },
+            { new: true }
+        ).select("-password -refreshToken");
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, user, "Timer settings saved successfully")
+        );
+    } catch (error) {
+        throw new ApiError(error.statusCode || 500, error.message || "Error saving timer settings");
+    }
+});
+
 export { 
     registerUser, 
     loginUser,
     logoutUser,
     refreshAccessToken,
     getCurrentUser,
+    verifyEmail,
+    saveTimerSettings,
 };
