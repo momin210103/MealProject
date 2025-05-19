@@ -6,17 +6,32 @@ import { User } from "../models/user.model.js";
 import { Meal } from "../models/meal.model.js";
 
 const saveMealSelection = asyncHandler(async (req, res) => {
-  const { breakfast, lunch, dinner } = req.body.selection;
-  const selectionDate = new Date(req.body.date);
-  console.log(req.body.selection);
+  const { meals, date } = req.body;
+
+  if (!meals || !Array.isArray(meals) || meals.length === 0) {
+    throw new ApiError(400, "No meals provided");
+  }
+
+  const selectionDate = new Date(date);
 
   try {
     const result = await UserMealSelection.findOneAndUpdate(
       { userId: req.user.id, date: selectionDate },
-      { selection: { breakfast: (breakfast ?? false), lunch:(lunch ?? false), dinner:(dinner ?? false) } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      {
+        userId: req.user.id,
+        date: selectionDate,
+        meals: meals.map(meal => ({
+          type: meal.type.toLowerCase(),
+          name: meal.name
+        }))
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true
+      }
     );
-    
+
     return res.status(200).json(
       new ApiResponse(200, result, "Meal selection saved successfully")
     );
@@ -24,6 +39,7 @@ const saveMealSelection = asyncHandler(async (req, res) => {
     throw new ApiError(500, err.message || "Failed to save selection");
   }
 });
+
 
 const getMealSelection = asyncHandler(async (req, res) => {
   try {
