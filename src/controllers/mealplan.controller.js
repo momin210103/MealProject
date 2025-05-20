@@ -43,7 +43,13 @@ const getMealPlansByDate = asyncHandler(async (req, res) => {
     const { date } = req.params;
     const userId = req.user._id;
 
-    const mealPlan = await MealPlan.findOne({ user: userId, date });
+    // Validate date string
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+        throw new ApiError(400, "Invalid date format. Use YYYY-MM-DD");
+    }
+
+    const mealPlan = await MealPlan.findOne({ user: userId, date: parsedDate });
 
     if (!mealPlan) {
         throw new ApiError(404, "No meal plan found for this date");
@@ -53,6 +59,7 @@ const getMealPlansByDate = asyncHandler(async (req, res) => {
         new ApiResponse(200, mealPlan, "Meal plan fetched successfully")
     );
 });
+
 
 const getMyMealPlans = asyncHandler(async (req, res) => {
     const userId = req.user._id;

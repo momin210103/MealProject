@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { Meal } from "../models/meal.model.js";
+import mongoose from "mongoose";
 
 const saveMealSelection = asyncHandler(async (req, res) => {
   const { meals, date } = req.body;
@@ -74,8 +75,48 @@ const getMealPlan = asyncHandler(async (req, res) => {
     }
 });
 
+const getMonthlyMealCount = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { year, month } = req.query; // year=2025, month=5  (May)
+
+  if (!year || !month) {
+    throw new ApiError(400, "Year and month query params required");
+  }
+
+  // মাস এবং বছর থেকে মাসের শুরু ও শেষ দিন তৈরি করো
+  const startDate = new Date(`${year}-${month.toString().padStart(2, '0')}-01`);
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + 1);
+
+  const result = await UserMealSelection.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        date: {
+          $gte: startDate,
+          $lt: endDate,
+        },
+      },
+    },
+    {
+      $unwind: "$meals"
+    },
+    {
+      $group: {
+        _id: "$userId",
+        totalMealsSelected: { $sum: 1 }
+      }
+    }
+  ]);
+
+  return res.status(200).json(new ApiResponse(200, result, "Monthly meal count fetched successfully"));
+});
+
+
+
 export {
     saveMealSelection,
     getMealSelection,
-    getMealPlan
+    getMealPlan,
+    getMonthlyMealCount
 };
