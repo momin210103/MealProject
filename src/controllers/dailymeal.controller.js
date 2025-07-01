@@ -6,6 +6,9 @@ import { User } from "../models/user.model.js";
 import { Meal } from "../models/meal.model.js";
 import mongoose from "mongoose";
 
+import { MealWeightConfig } from "../models/mealweight.model.js";
+
+
 const saveMealSelection = asyncHandler(async (req, res) => {
   const { meals, date } = req.body;
 
@@ -15,30 +18,44 @@ const saveMealSelection = asyncHandler(async (req, res) => {
 
   const selectionDate = new Date(date);
 
-  try {
-    const result = await UserMealSelection.findOneAndUpdate(
-      { userId: req.user.id, date: selectionDate },
-      {
-        userId: req.user.id,
-        date: selectionDate,
-        meals: meals.map(meal => ({
-          type: meal.type.toLowerCase(),
-          name: meal.name
-        }))
-      },
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true
-      }
-    );
+  // meal weight config fetch
+  const weightConfigs = await MealWeightConfig.find({});
+  const weightMap = {};
+  weightConfigs.forEach(cfg => {
+    weightMap[cfg.type] = cfg.weight;
+  });
 
-    return res.status(200).json(
-      new ApiResponse(200, result, "Meal selection saved successfully")
-    );
-  } catch (err) {
-    throw new ApiError(500, err.message || "Failed to save selection");
-  }
+  let totalWeight = 0;
+  const mealData = meals.map(meal => {
+    const type = meal.type.toLowerCase();
+    const weight = weightMap[type] || 1;
+    totalWeight += weight;
+
+    return {
+      name: meal.name,
+      type,
+      weight
+    };
+  });
+
+  const result = await UserMealSelection.findOneAndUpdate(
+    { userId: req.user.id, date: selectionDate },
+    {
+      userId: req.user.id,
+      date: selectionDate,
+      meals: mealData,
+      totalWeight
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, result, `Meal selection saved. Total weight: ${totalWeight}`)
+  );
 });
 
 
@@ -104,7 +121,7 @@ const getMonthlyMealCount = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: "$userId",
-        totalMealsSelected: { $sum: 1 }
+        totalMealsSelected: { $sum: "$meals.weight" }
       }
     }
   ]);

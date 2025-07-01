@@ -20,6 +20,10 @@ const userMealSelectionSchema = new mongoose.Schema({
       name: {
         type: String,
         required: true
+      },
+      weight:{
+        type:Number,
+        
       }
     }
   ],

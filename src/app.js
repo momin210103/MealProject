@@ -21,6 +21,7 @@ app.use(cookieParser())
 //routes import 
 import userRouter from "./routes/user.routes.js"
 import mealPlanRouter from "./routes/mealPlanRoutes.js"
+import UserBalance from "./routes/userbalance.route.js";
 
 //routes declaration
 app.get("/", (req, res) => {
@@ -28,5 +29,6 @@ app.get("/", (req, res) => {
 });
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1", mealPlanRouter)
+app.use("/api/v1/userbalance", UserBalance)
 
 export {app}

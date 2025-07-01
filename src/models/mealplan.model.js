@@ -14,6 +14,10 @@ const mealItemSchema = new Schema({
     type: String,
     required: [true, 'Meal type is required'],
     enum: ['breakfast', 'lunch', 'dinner']
+  },
+  weight:{
+    type:Number,
+    default:1
   }
 }, { _id: false });
 
@@ -27,6 +31,12 @@ const mealPlanSchema = new Schema({
   date: {
     type: Date,
     required: [true, 'Please specify a date for the meal plan'],
+    default: () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return tomorrow;
+    },
     index: true,
     validate: {
       validator: function(date) {
@@ -45,6 +55,7 @@ const mealPlanSchema = new Schema({
       message: 'Please provide at least one meal'
     }
   },
+  
   startTime:{
     type:String,
     //default:"12:00"

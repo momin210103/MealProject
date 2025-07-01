@@ -2,33 +2,59 @@ import { MealPlan } from "../models/mealplan.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import {MealWeightConfig} from "../models/mealweight.model.js"
 
 const createOrUpdateMealPlan = asyncHandler(async (req, res) => {
-    const { date, meals,startTime,endTime } = req.body;
+    const { date, meals, startTime, endTime, weights: clientWeights } = req.body;
     const userId = req.user._id;
 
-    // Check if user is a manager
     if (req.user.Role !== 'Manager') {
-        throw new ApiError(403, "Only managers can create or update meal plans. Please contact your manager for assistance.");
+        throw new ApiError(403, "Only managers can create or update meal plans.");
     }
 
-    // Check if meal plan already exists for this date
-    let mealPlan = await MealPlan.findOne({ user: userId, date });
+    // যদি client side থেকে weights না আসে তাহলে DB থেকে MealWeightConfig পড়ে নাও
+    let weights = clientWeights;
+
+    if (!weights || typeof weights !== 'object') {
+        const configs = await MealWeightConfig.find({});
+        weights = {};
+        configs.forEach(config => {
+            weights[config.type] = config.weight;
+        });
+    }
+
+    // এখন meal গুলাতে weight বসাও
+    const updatedMeals = meals.map(meal => ({
+        ...meal,
+        weight: weights[meal.type] || 1  // fallback weight = 1
+    }));
+    let mealDate;
+
+if (date) {
+    mealDate = new Date(date);
+} else {
+    mealDate = new Date();
+    mealDate.setDate(mealDate.getDate() );
+}
+
+mealDate.setHours(0, 0, 0, 0); // 🔐 টাইম অংশ 00:00:00 করে দিন
+
+
+    // পুরনো meal plan আছে কি না দেখে নেয়া
+    let mealPlan = await MealPlan.findOne({ user: userId, date: mealDate });
 
     if (mealPlan) {
-        // Update existing meal plan
-        mealPlan.meals = meals;
+        mealPlan.meals = updatedMeals;
         mealPlan.isGlobal = true;
         await mealPlan.save();
         return res.status(200).json(
             new ApiResponse(200, mealPlan, "Meal plan updated successfully")
         );
     } else {
-        // Create new meal plan
         mealPlan = await MealPlan.create({
             user: userId,
-            date,
-            meals,
+            date: mealDate,
+            meals: updatedMeals,
             isGlobal: true,
             startTime,
             endTime
@@ -38,6 +64,24 @@ const createOrUpdateMealPlan = asyncHandler(async (req, res) => {
         );
     }
 });
+
+const setMealTypeWeight = asyncHandler(async (req, res) => {
+    const { type, weight } = req.body;
+  
+    if (!['breakfast', 'lunch', 'dinner'].includes(type)) {
+      throw new ApiError(400, "Invalid meal type");
+    }
+  
+    const config = await MealWeightConfig.findOneAndUpdate(
+      { type },
+      { weight, updatedBy: req.user._id },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  
+    return res.status(200).json(
+      new ApiResponse(200, config, `Weight for ${type} updated`)
+    );
+  });
 
 const getMealPlansByDate = asyncHandler(async (req, res) => {
     const { date } = req.params;
@@ -85,5 +129,6 @@ export {
     createOrUpdateMealPlan,
     getMealPlansByDate,
     getMyMealPlans,
-    getAllMealPlans
+    getAllMealPlans,
+    setMealTypeWeight
 }; 
