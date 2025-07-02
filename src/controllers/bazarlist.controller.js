@@ -16,8 +16,20 @@ const createBazarlist = async (req, res) => {
 
 const getBazarlist = async (req, res) => {
     try {
+        const totalData = await Bazarlist.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: "$amount" },
+                    totalCount: { $sum: 1 }
+                }
+            }
+        ]);
+        const totalAmount = totalData[0]?.totalAmount || 0;
+        const totalBazar = totalData[0]?.totalCount || 0;
+
         const bazarlist = await Bazarlist.find();
-        return res.status(200).json(bazarlist);
+        return res.status(200).json({ bazarlist, totalAmount, totalBazar });
     } catch (error) {
         return res.status(500).json({ message: "Error fetching Bazarlist", error });
     }
