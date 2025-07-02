@@ -68,8 +68,8 @@ const userSchema = new Schema({
     },
     Role:{
         type:String,
-        enum:["Manager","user"],
-        default:"user",
+        enum:["Manager","User"],
+        default:"User",
     },
     RoomNumber:{
         type:String,

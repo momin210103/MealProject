@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {MealWeightConfig} from "../models/mealweight.model.js"
+import { UserMealSelection } from "../models/usermealselection.model.js";
 
 const createOrUpdateMealPlan = asyncHandler(async (req, res) => {
     const { date, meals, startTime, endTime, weights: clientWeights } = req.body;
@@ -65,6 +66,7 @@ mealDate.setHours(0, 0, 0, 0); // 🔐 টাইম অংশ 00:00:00 করে
     }
 });
 
+
 const setMealTypeWeight = asyncHandler(async (req, res) => {
     const { type, weight } = req.body;
   
@@ -83,26 +85,63 @@ const setMealTypeWeight = asyncHandler(async (req, res) => {
     );
   });
 
-const getMealPlansByDate = asyncHandler(async (req, res) => {
-    const { date } = req.params;
-    const userId = req.user._id;
 
-    // Validate date string
+const getMealPlanByDateClean = asyncHandler(async (req, res) => {
+    const { date } = req.params;
+    const userId = req.user._id; 
+
+    // Validate date format
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
         throw new ApiError(400, "Invalid date format. Use YYYY-MM-DD");
     }
 
-    const mealPlan = await MealPlan.findOne({ user: userId, date: parsedDate });
+    // Create next date to cover the entire day
+    const nextDate = new Date(parsedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
 
+    // Fetch from MealPlan collection
+    const mealPlan = await MealPlan.findOne({
+        user: userId,
+        date: {
+            $gte: parsedDate,
+            $lt: nextDate
+        },
+    });
     if (!mealPlan) {
-        throw new ApiError(404, "No meal plan found for this date");
+        throw new ApiError(404, "Meal plan not found for the specified date");
     }
+    const weightByType = mealPlan.meals.reduce((acc,meal) =>{
+        const type = meal.type.toLowerCase();
+        acc[type] = (acc[type] || 0) + (meal.weight||0);
+        return acc;
+    },{});
+    const totalWeight = Object.values(weightByType).reduce((sum, weight) => sum + weight, 0);   
 
     return res.status(200).json(
-        new ApiResponse(200, mealPlan, "Meal plan fetched successfully")
+        new ApiResponse(200, {weightByType,totalWeight}, "Meal plan fetched successfully")
     );
 });
+
+const getMealPlanByMonth = asyncHandler(async (req, res) => {
+    const {month, year} = req.params;
+    const userId = req.user._id;
+    const startDate = new Date(year, month - 1, 1); // month is 0-indexed in JS
+    const endDate = new Date(year, month, 1); // next month start date
+    const mealplans = await UserMealSelection.find({
+        userId: userId,
+        date: {
+            $gte: startDate,
+            $lt: endDate
+        }
+    });
+    
+    res.status(200).json(
+        new ApiResponse(200, mealplans, "Meal plans for the month fetched successfully")
+    );
+
+});
+
 
 
 const getMyMealPlans = asyncHandler(async (req, res) => {
@@ -116,6 +155,7 @@ const getMyMealPlans = asyncHandler(async (req, res) => {
     );
 });
 
+
 const getAllMealPlans = asyncHandler(async (req, res) => {
     const mealPlans = await MealPlan.find({ isGlobal: true })
         .sort({ date: -1 });
@@ -127,8 +167,9 @@ const getAllMealPlans = asyncHandler(async (req, res) => {
 
 export {
     createOrUpdateMealPlan,
-    getMealPlansByDate,
+    getMealPlanByDateClean,
     getMyMealPlans,
     getAllMealPlans,
-    setMealTypeWeight
+    setMealTypeWeight,
+    getMealPlanByMonth
 }; 
