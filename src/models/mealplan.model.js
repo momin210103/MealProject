@@ -31,20 +31,24 @@ const mealPlanSchema = new Schema({
   date: {
     type: Date,
     required: [true, 'Please specify a date for the meal plan'],
-    default: () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      return tomorrow;
-    },
-    index: true,
-    validate: {
-      validator: function(date) {
-        return date >= new Date(new Date().setHours(0, 0, 0, 0));
-      },
-      message: 'Meal plan date cannot be in the past'
-    }
-  },
+    // default: () => {
+    //     const tomorrow = new Date();
+    //     tomorrow.setDate(tomorrow.getDate() + 1);
+    //     tomorrow.setHours(0, 0, 0, 0);
+    //     // Adjust to store your local midnight as UTC in MongoDB
+    //     return new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000);
+    // },
+    // index: true,
+    // validate: {
+    //     validator: function(date) {
+    //         const todayLocal = new Date();
+    //         todayLocal.setHours(0, 0, 0, 0);
+    //         return date >= todayLocal;
+    //     },
+    //     message: 'Meal plan date cannot be in the past'
+    // }
+},
+
   meals: {
     type: [mealItemSchema],
     required: true,
@@ -56,14 +60,6 @@ const mealPlanSchema = new Schema({
     }
   },
   
-  startTime:{
-    type:String,
-    //default:"12:00"
-  },
-  endTime:{
-    type:String,
-   // default:"10:00"
-  },
   isGlobal: {
     type: Boolean,
     default: false,

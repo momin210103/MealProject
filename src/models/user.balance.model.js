@@ -5,7 +5,6 @@ const userBalanceSchema = new mongoose.Schema({
   { type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
-
   },
     addBalance: { type: Number, default: 0 },
     addDate: { type: Date, default: Date.now },

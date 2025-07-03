@@ -1,4 +1,6 @@
 import UserBalance from "../models/user.balance.model.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 const addBalance = async (req, res) => {
     const userId = req.user._id
     const {amount,date,cost} = req.body;
@@ -40,4 +42,13 @@ const addBalance = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
-export { addBalance };
+const getBalance = asyncHandler( async (req,res) => {
+  const userId = req.user._id
+  const userAmount = await UserBalance.find({
+    userId:userId,
+  });
+  return res.status(200).json(
+    new ApiResponse(200,userAmount,"Balanace fetched successuly")
+  );
+});
+export { addBalance,getBalance };

@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 import { MealWeightConfig } from "../models/mealweight.model.js";
 
 
-const saveMealSelection = asyncHandler(async (req, res) => {
+const  saveMealSelection = asyncHandler(async (req, res) => {
   const { meals, date } = req.body;
 
   if (!meals || !Array.isArray(meals) || meals.length === 0) {
