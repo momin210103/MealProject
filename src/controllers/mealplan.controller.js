@@ -82,6 +82,9 @@ const setMealTypeWeight = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, config, `Weight for ${type} updated`));
 });
 
+
+
+
 const getMealPlanByDateClean = asyncHandler(async (req, res) => {
   const { date } = req.params;
   const userId = req.user._id;
@@ -186,7 +189,7 @@ const getSetMeals = asyncHandler(async (req, res) => {
 
 
 const getTotalMealWeights = asyncHandler(async (req, res) => {
-  const { date } = req.query; // expects 'YYYY-MM-DD'
+  const { date } = req.params; // expects 'YYYY-MM-DD'
 
   if (!date) {
     return res.status(400).json({ message: "Date is required in YYYY-MM-DD format." });
@@ -289,5 +292,6 @@ export {
   setMealTypeWeight,
   getMealPlanByMonth,
   getTotalMealWeights,
-  getTotalMealsOfMonth
+  getTotalMealsOfMonth,
+  
 };

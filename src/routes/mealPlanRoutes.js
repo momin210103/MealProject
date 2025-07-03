@@ -1,5 +1,5 @@
 import express from 'express';
-import { createOrUpdateMealPlan, getMealPlanByDateClean, getTotalMealWeights, getSetMeals, setMealTypeWeight,getMealPlanByMonth, getTotalMealsOfMonth } from '../controllers/mealplan.controller.js';
+import { createOrUpdateMealPlan, getMealPlanByDateClean, getTotalMealWeights, getSetMeals, setMealTypeWeight,getMealPlanByMonth, getTotalMealsOfMonth, } from '../controllers/mealplan.controller.js';
 import { validateMealPlanData } from '../middlewares/mealplan.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { isManager } from '../middlewares/manager.middleware.js';
@@ -24,7 +24,7 @@ router.post('/mealplan/weight', isManager,setMealTypeWeight);
 
 router.get('/selectedmeals/:date', verifyJWT, getMealPlanByDateClean);
 router.get('/selectedmeals/:year/:month',verifyJWT, getMealPlanByMonth);
-router.get('/totalweights',getTotalMealWeights)
+router.get('/totalweights/:date',getTotalMealWeights)
 router.get('/totalmealsofmonth/:month',getTotalMealsOfMonth)
 
 export default router;
