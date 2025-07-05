@@ -1,8 +1,15 @@
 import UserBalance from "../models/user.balance.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { UserMealSelection } from "../models/usermealselection.model.js";
+import { MonthlySummary } from "../models/monthlysummery.model.js";
 import dayjs from "dayjs";
+import { getBazarlistSummary } from "../Services/bazalist.service.js";
 const addBalance = async (req, res) => {
+  const month = req.query.month || dayjs().format("YYYY-MM");
+  const startOfMonth = dayjs(month).startOf('month').toDate();
+  const endOfMonth = dayjs(month).endOf('month').toDate();
+
   const userId = req.user._id;
   const { amount, date, cost } = req.body;
   const addedDate = date ? new Date(date) : new Date();
@@ -13,6 +20,52 @@ const addBalance = async (req, res) => {
   }
 
   try {
+    // const month = req.query.month || dayjs().format("YYYY-MM");
+    const {totalAmount,totalBazar} =  await getBazarlistSummary(month);
+    // console.log(totalAmount);
+    
+
+
+    const MealWeightData = await UserMealSelection.aggregate([
+      {
+        $match:{
+          userId:userId,
+          date:{$gte:startOfMonth,$lte:endOfMonth}}
+      },
+      {
+        $unwind:"$meals"
+      },
+      {
+        $group:{
+          _id:null,
+          totalMealWeight:{$sum:"$meals.weight"}
+        }
+      }
+    ]);
+        const MealWeightofMonthAll = await UserMealSelection.aggregate([
+      {
+        $match:{
+          // userId:userId,
+          date:{$gte:startOfMonth,$lte:endOfMonth}}
+      },
+      {
+        $unwind:"$meals"
+      },
+      {
+        $group:{
+          _id:null,
+          totalMealWeightOfMonthAll:{$sum:"$meals.weight"}
+        }
+      }
+    ]);
+    const totalMealWeightAll = MealWeightofMonthAll[0]?.totalMealWeightOfMonthAll;
+    // console.log(totalMealWeightOfMonth);
+    const totalCost = totalAmount;
+    const mealRate = Number((totalCost/totalMealWeightAll).toFixed(2));
+
+    const totalMealWeight = MealWeightData[0]?.totalMealWeight;
+
+
     const userBalance = await UserBalance.findOneAndUpdate(
       {
         userId,
@@ -23,8 +76,15 @@ const addBalance = async (req, res) => {
           totalBalance: amountValue,
           totalCost: costValue,
           currentBalance: amountValue - costValue,
+
         },
-        addDate: addedDate,
+        $set:{
+          addDate: addedDate,
+          totalMealWeight:totalMealWeight,
+          mealRate:mealRate
+
+        }
+        
       },
       {
         new: true,

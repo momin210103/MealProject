@@ -23,7 +23,6 @@ const userMealSelectionSchema = new mongoose.Schema({
       },
       weight:{
         type:Number,
-        
       }
     }
   ],

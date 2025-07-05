@@ -11,8 +11,10 @@ const userBalanceSchema = new mongoose.Schema({
     totalBalance: { type: Number, default: 0 },
     totalCost: { type: Number, default: 0 },
     currentBalance: { type: Number, default: 0 },
-
+    totalMealWeight:{type:Number,default:0},
+    mealRate:{type:Number,default:0},
     createdAt: { type: Date, default: Date.now },
+
   
 });
 

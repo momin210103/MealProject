@@ -1,4 +1,5 @@
 import Bazarlist from "../models/bazarlist.model.js";
+import { getBazarlistSummary } from "../Services/bazalist.service.js";
 import dayjs from 'dayjs';
 
 const createBazarlist = async (req, res) => {
@@ -22,23 +23,25 @@ const getBazarlist = async (req, res) => {
         const startOfMonth = dayjs(month).startOf('month').toDate();
         const endOfMonth = dayjs(month).endOf('month').toDate();
 
-        const totalData = await Bazarlist.aggregate([
-            {
-                $match: {
-                    date: { $gte: startOfMonth, $lte: endOfMonth }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalAmount: { $sum: "$amount" },
-                    totalCount: { $sum: 1 }
-                }
-            }
-        ]);
+        const {totalAmount,totalBazar} = await getBazarlistSummary(month);
 
-        const totalAmount = totalData[0]?.totalAmount || 0;
-        const totalBazar = totalData[0]?.totalCount || 0;
+        // const totalData = await Bazarlist.aggregate([
+        //     {
+        //         $match: {
+        //             date: { $gte: startOfMonth, $lte: endOfMonth }
+        //         }
+        //     },
+        //     {
+        //         $group: {
+        //             _id: null,
+        //             totalAmount: { $sum: "$amount" },
+        //             totalCount: { $sum: 1 }
+        //         }
+        //     }
+        // ]);
+
+        // const totalAmount = totalData[0]?.totalAmount || 0;
+        // const totalBazar = totalData[0]?.totalCount || 0;
 
         const bazarlist = await Bazarlist.find({
             date: { $gte: startOfMonth, $lte: endOfMonth }
