@@ -11,9 +11,9 @@ const addBalance = async (req, res) => {
   const endOfMonth = dayjs(month).endOf('month').toDate();
 
   const userId = req.user._id;
-  const { amount, date, cost } = req.body;
+  const { amount,date } = req.body;
+  // const amountValue = Number(amount) || 0;
   const addedDate = date ? new Date(date) : new Date();
-  const costValue = cost ? Number(cost) : 0;
   const amountValue = amount ? Number(amount) : 0;
   if (!userId) {
     return res.status(400).json({ message: "User ID is required" });
@@ -25,7 +25,7 @@ const addBalance = async (req, res) => {
     // console.log(totalAmount);
     
 
-
+      //total meal weight find of a user
     const MealWeightData = await UserMealSelection.aggregate([
       {
         $match:{
@@ -42,6 +42,7 @@ const addBalance = async (req, res) => {
         }
       }
     ]);
+    //total mealweight of all users
         const MealWeightofMonthAll = await UserMealSelection.aggregate([
       {
         $match:{
@@ -60,28 +61,37 @@ const addBalance = async (req, res) => {
     ]);
     const totalMealWeightAll = MealWeightofMonthAll[0]?.totalMealWeightOfMonthAll;
     // console.log(totalMealWeightOfMonth);
-    const totalCost = totalAmount;
+    const totalCost = totalAmount;  //! -> ## totalBazarcost ## <-
     const mealRate = Number((totalCost/totalMealWeightAll).toFixed(2));
 
+
+    //Total mealweight of a Month of a user
     const totalMealWeight = MealWeightData[0]?.totalMealWeight;
 
+    //! total cost of a user in one month
+    const monthlyCost = Number(mealRate * totalMealWeight).toFixed(2);
 
-    const userBalance = await UserBalance.findOneAndUpdate(
+    //! totalBalance is the totalDeposit of a month
+    const userDeposit = await UserBalance.findOne({ userId });
+    const prevTotalBalance = userDeposit?.totalBalance || 0;
+    const newTotalBalance = prevTotalBalance + Number(amountValue);
+    const newCurrentBalance = Number((newTotalBalance - monthlyCost).toFixed(2));
+     const userBalance = await UserBalance.findOneAndUpdate(
       {
         userId,
       },
       {
         $inc: {
-          addBalance: amount,
+          addBalance: amountValue,
           totalBalance: amountValue,
-          totalCost: costValue,
-          currentBalance: amountValue - costValue,
 
         },
         $set:{
           addDate: addedDate,
           totalMealWeight:totalMealWeight,
-          mealRate:mealRate
+          mealRate:mealRate,
+          totalCost:monthlyCost,
+          currentBalance:newCurrentBalance
 
         }
         
@@ -92,7 +102,7 @@ const addBalance = async (req, res) => {
       }
     );
     const responseBalance = userBalance.toObject();
-    responseBalance.addBalance = amountValue;
+    responseBalance.addBalance = amount;
 
     return res.status(200).json({
       message: "Funds added successfully",
