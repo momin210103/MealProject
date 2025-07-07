@@ -1,24 +1,29 @@
 // require("dotenv").config({path:".env"});
+// server.js
+
 import dotenv from "dotenv";
 import connectDB from "./db/db.js";
-import {app} from './app.js'
+import { app } from "./app.js";
 
+// Load environment variables
 dotenv.config({
-    path:"./.env"
+    path: "./.env"
 });
-const port = process.env.PORT || 8000
 
+// Port setup
+const port = process.env.PORT || 8000;
+
+// Connect to DB first, then start server
 connectDB()
-.then(()=>{
-    app.listen(port,()=>{
-        console.log(`Server is Running on http://localhost:${port}`)
-
+    .then(() => {
+        app.listen(port, '0.0.0.0', () => { // 👈 ensures Render detects port
+            console.log(`🔥 Server is running on http://0.0.0.0:${port}`);
+        });
     })
-})
-.catch((error)=>{
-    console.log("MONGO db conenction failed !!!",error);
+    .catch((error) => {
+        console.error("❌ MongoDB connection failed:", error);
+    });
 
-})
 
 
 
