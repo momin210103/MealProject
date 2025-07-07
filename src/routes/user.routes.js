@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser, refreshAccessToken,getCurrentUser,verifyEmail,saveTimerSettings} from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser, refreshAccessToken,getCurrentUser,verifyEmail,saveTimerSettings, setManager, deleteUser} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { User } from "../models/user.model.js"; // Import User model
 import { saveMealSelection,getMealSelection,getMealPlan } from "../controllers/dailymeal.controller.js";
-
+import { isManager } from "../middlewares/manager.middleware.js";
 const userRouter = Router();
 
 // POST /register route
@@ -37,6 +37,10 @@ userRouter.route("/dailymeal").get(verifyJWT, getMealSelection);
 userRouter.route("/timer-settings").post(verifyJWT, saveTimerSettings);
 
 userRouter.route("/me").get(verifyJWT, getCurrentUser);
+
+
+
+
 
 
 // Secure routes

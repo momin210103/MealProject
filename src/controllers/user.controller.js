@@ -349,6 +349,64 @@ const saveTimerSettings = asyncHandler(async (req, res) => {
     }
 });
 
+const setManager = asyncHandler(async(req,res) =>{
+    try {
+        const {userId} = req.params;
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {Role:"Manager"},
+            {new:true}
+        );
+        if(!updatedUser){
+            return res.status(404).json({message:"User not found"});
+
+        }
+        res.json({message:"User promoted to manager.", User:updatedUser})
+    } catch (error) {
+        console.error("Error setting manager:", error);
+        res.status(500).json({ message: "Server error." });
+        
+    }
+});
+
+const removeManager = asyncHandler( async (req,res) =>{
+    try {
+        const {userId} = req.params;
+    const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {Role:"User"},
+        {new:true}
+    );
+    if(!updatedUser){
+        return res.status(404).json({message:"User not found"});
+    }
+    res.status(200).json({
+        message:"Remove Manager",
+        User:updatedUser
+    });
+    } catch (error) {
+        console.error("Error setting manager:", error);
+        res.status(500).json({ message: "Server error." });
+    }
+
+});
+
+const deleteUser = asyncHandler( async (req,res) =>{
+    try {
+        const {userId} = req.params;
+        
+        const deleteUser  = await User.findByIdAndDelete(userId);
+        if(!deleteUser) {
+            return res.status(404).json({message:"User not found"});
+        }
+        res.json({message:"User deleted succesfully"});
+        
+    } catch (error) {
+        console.error("Error deleting user",error);
+        res.status(500).json({message:"Server Error"});
+    }
+});
+
 export { 
     registerUser, 
     loginUser,
@@ -357,4 +415,7 @@ export {
     getCurrentUser,
     verifyEmail,
     saveTimerSettings,
+    setManager,
+    removeManager,
+    deleteUser
 };

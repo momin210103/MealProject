@@ -65,7 +65,8 @@ const createOrUpdateMealPlan = asyncHandler(async (req, res) => {
 });
 
 const setMealTypeWeight = asyncHandler(async (req, res) => {
-  const { type, weight } = req.body;
+  try {
+    const { type, weight } = req.body;
 
   if (!["breakfast", "lunch", "dinner"].includes(type)) {
     throw new ApiError(400, "Invalid meal type");
@@ -80,6 +81,16 @@ const setMealTypeWeight = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, config, `Weight for ${type} updated`));
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+    message:"Error fetching meal Weight",
+    error:error.message,
+    stack:error.stack
+    });
+    
+  }
 });
 
 
