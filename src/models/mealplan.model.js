@@ -87,7 +87,7 @@ mealPlanSchema.index({ user: 1, date: 1 }, { unique: true });
 mealPlanSchema.pre(/^find/, function(next) {
   this.populate({
     path: 'user',
-    select: 'name email'
+    select: 'fullname email'
   });
   next();
 });
