@@ -16,8 +16,8 @@ const port = process.env.PORT || 8000;
 // Connect to DB first, then start server
 connectDB()
     .then(() => {
-        app.listen(port, '0.0.0.0', () => { // 👈 ensures Render detects port
-            console.log(`🔥 Server is running on http://0.0.0.0:${port}`);
+        app.listen(port, () => { 
+            console.log(`🔥 Server is running on http://localhost:${port}`);
         });
     })
     .catch((error) => {
