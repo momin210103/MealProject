@@ -7,9 +7,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://mealproject-frontend.onrender.com' // replace with your actual frontend URL
+];
 
 app.use(cors({
-    origin:'http://localhost:5173',
+    origin:allowedOrigins,
     credentials: true,
 }))
 
