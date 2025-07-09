@@ -4,6 +4,7 @@ import { validateMealPlanData } from '../middlewares/mealplan.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { isManager } from '../middlewares/manager.middleware.js';
 import { saveMealSelection,getMonthlyMealCount } from '../controllers/dailymeal.controller.js';
+import { createTimer, getTimeDifference } from '../controllers/settimer.controller.js';
 
 const router = express.Router();
 
@@ -25,6 +26,11 @@ router.post('/mealplan/weight', isManager,setMealTypeWeight);
 router.get('/selectedmeals/:date', verifyJWT, getMealPlanByDateClean);
 router.get('/selectedmeals/:year/:month',verifyJWT, getMealPlanByMonth);
 router.get('/totalweights/:date',getTotalMealWeights)
-router.get('/totalmealsofmonth/:month',getTotalMealsOfMonth)
+router.get('/totalmealsofmonth/:month',getTotalMealsOfMonth);
+
+//! create timer
+
+router.post('/createtimer',isManager,createTimer)
+router.get('/timedifference/:id',isManager,getTimeDifference)
 
 export default router;
