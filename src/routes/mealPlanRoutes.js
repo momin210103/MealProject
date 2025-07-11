@@ -4,7 +4,7 @@ import { validateMealPlanData } from '../middlewares/mealplan.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { isManager } from '../middlewares/manager.middleware.js';
 import { saveMealSelection,getMonthlyMealCount } from '../controllers/dailymeal.controller.js';
-import { createTimer, getTimeDifference } from '../controllers/settimer.controller.js';
+import { createOrUpdateGlobalTimer,getGlobalTimer} from '../controllers/settimer.controller.js';
 
 const router = express.Router();
 
@@ -30,7 +30,8 @@ router.get('/totalmealsofmonth/:month',getTotalMealsOfMonth);
 
 //! create timer
 
-router.post('/createtimer',isManager,createTimer)
-router.get('/timedifference/:id',isManager,getTimeDifference)
+router.post('/createtimer',isManager,createOrUpdateGlobalTimer);
+router.get('/globaltimer',getGlobalTimer);
+
 
 export default router;

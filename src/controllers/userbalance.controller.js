@@ -183,11 +183,13 @@ const getAlluserCurrentBalanceCurrentMonth = asyncHandler(async (req, res) => {
         $group:{
           _id:null,
           totalCurrentBalance: { $sum: "$currentBalance" },
+          totalDeposit:{$sum:"$totalBalance"}
         }
       },
     ]);
-    const totalCurrentBalance = currentBalance[0]?.totalCurrentBalance || 0;
-    return res.status(200).json({ totalCurrentBalance });
+    const totalCurrentBalance = currentBalance[0]?.totalCurrentBalance;
+    const totalDeposit = currentBalance[0]?.totalDeposit;
+    return res.status(200).json({ totalCurrentBalance,totalDeposit });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
