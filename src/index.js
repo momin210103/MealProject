@@ -11,7 +11,7 @@ dotenv.config({
 });
 
 // Port setup
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 8000; //Port
 
 // Connect to DB first, then start server
 connectDB()
