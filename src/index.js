@@ -12,6 +12,7 @@ dotenv.config({
 
 // Port setup
 const port = process.env.PORT || 8000; //Port
+app.set('trust proxy', 1);
 
 // Connect to DB first, then start server
 connectDB()
