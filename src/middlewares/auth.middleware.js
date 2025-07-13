@@ -48,7 +48,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
                 res.cookie("accessToken", newAccessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production" });
 
                 // Attach new user data
-                req.user = user;
+                req.user = user; 
                 next();
             } catch (refreshError) {
                 throw new ApiError(401, "Invalid refresh token, please log in again");

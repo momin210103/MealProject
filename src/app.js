@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin:'https://mealplannerclient.onrender.com',
+    origin:'https://mealplannerclient.onrender.com', //clint url
     credentials: true,
 }))
 
