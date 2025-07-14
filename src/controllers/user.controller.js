@@ -32,88 +32,116 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password } = req.body;
+    // get user details from frontend
+    // Validation  -not empty
+    // check if user already exists : username ,email
+    // Check for image check for avatar
+    // upload them to cloudinary, avatar
+    // create user object -create entry in db
+    // remove password from refresh token from resposne
+    // check for user creation
+    // return response
+    //console.log('req.body: ', req.body);
+    // console.log('req.files: ', req.files);
 
-    // ✅ Validate
-    if ([fullName, email, username, password].some(field => field?.trim() === "")) {
-        throw new ApiError(400, "All fields are required");
+    //? Logic system
+
+    const {fullName,email,username,password}=req.body
+    // console.log("email: ",email);
+    if([fullName,email,username,password].some((field)=>
+        field?.trim() === "" )
+    ) {
+        throw new ApiError(400,"All fields are required")
+
     }
-
-    // ✅ Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        throw new ApiError(409, "Email already exists");
+    
+    /*Logic Another system
+    if(fullName === ""){
+        throw new ApiError(400,"Full name is required");
     }
-
-    // ✅ Create verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationCodeExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // ✅ (Optional) Handle avatar upload
-    // const avatarLocalPath = req.files?.avatar?.[0]?.path;
-    // if (!avatarLocalPath) throw new ApiError(400, "Avatar image is required");
-    // const avatar = await uploadOnCloudinary(avatarLocalPath);
-    // if (!avatar?.url) throw new ApiError(400, "Error uploading avatar");
-
-    // ✅ Create user
-    const user = await User.create({
-        fullName,
-        email,
-        username: username.toLowerCase(),
-        password,
-        verificationCode,
-        verificationCodeExpires,
-        // avatar: avatar.url
-    });
-
-    const createdUser = await User.findById(user._id).select("-password -refreshToken");
-    if (!createdUser) {
-        throw new ApiError(500, "Something went wrong while creating user");
+    if(email === ""){
+        throw new ApiError(400,"Email is required");
     }
+    if(username === ""){
+        throw new ApiError(400,"Username is required");
+    }
+    if(password === ""){
+        throw new ApiError(400,"Password is required");
+    }*/
 
-    // ✅ Email verification setup
-    const transporter = nodemailer.createTransport({
-        service: "Gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+        //! check user already exits
+       const existendUser =  await User.findOne({
+            $or:[{ email }]
+        })
+        if(existendUser){
+            throw new ApiError(409,"Email already exists")
         }
-    });
+        //verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+        const verificationCodeExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
-    // Debug SMTP connection on Render
-    transporter.verify((error, success) => {
-        if (error) {
-            console.error("SMTP connection error:", error);
-        } else {
-            console.log("SMTP connected:", success);
+
+        //! image and check image
+    //    const avatarLocalPath = req.files?.avatar[0]?.path 
+
+    //    if(!avatarLocalPath){
+    //         throw new ApiError(400,"Image is required")
+    //     }
+
+
+        //! upload cloudinary
+        //console.log("avatarLocalPath: ",avatarLocalPath);
+
+        // const avatar = await uploadOnCloudinary(avatarLocalPath)
+        //console.log("avatar: ",avatar);
+
+        // if(!avatar){
+        //     throw new ApiError(400,"Avatar file is required")
+        // }
+
+       const user = await User.create({
+            fullName,
+            // avatar: avatar.url,
+            email,
+            username: username.toLowerCase(),
+            password,
+            verificationCode,
+            verificationCodeExpires,
+
+        })
+
+        const createdUser = await User.findById(user._id).select("-password -refreshToken ")
+
+        const transporter = nodemailer.createTransport({
+           service:"Gmail",
+           auth:{
+            user:process.env.EMAIL_USER,
+            pass:process.env.EMAIL_PASS
+           }
+        })
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        const verificationLink = `${clientUrl}/verify-email?email=${email}&code=${verificationCode}`;
+
+       await transporter.sendMail({
+        from:'"MealPlaner"<momincse13@gmail.com>',
+        to: email,
+        subject: "Email Verification",
+        html: `<p>Hello ${fullName},</p>
+               <p>Your verification code is: <b>${verificationCode}</b></p>
+               <p>Click Here for Verify <a href="${verificationLink}">here</a> to verify your email.</p>`,
+    
+    });
+            
+
+        if(!createdUser){
+            throw new ApiError(500,"Some thing went wrong while creating register")
         }
-    });
 
-    const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
-    const verificationLink = `${CLIENT_URL}/verify-email?email=${encodeURIComponent(email)}&code=${verificationCode}`;
+        return res.status(201).json(
+            new ApiResponse(200,createdUser,"User Register successfully")
+        )
 
-    try {
-        const info = await transporter.sendMail({
-            from: `"MealPlanner" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: "Email Verification",
-            html: `
-                <p>Hello ${fullName},</p>
-                <p>Your verification code is: <b>${verificationCode}</b></p>
-                <p>Or click <a href="${verificationLink}">here</a> to verify your email.</p>
-            `
-        });
-        console.log("Email sent successfully:", info.response);
-    } catch (err) {
-        console.error("Error sending verification email:", err);
-        // Optionally: decide if you want to delete the user if email fails
-    }
-
-    return res.status(201).json(
-        new ApiResponse(201, createdUser, "User registered successfully. Please check your email for verification.")
-    );
-});
-
+})
 
 const verifyEmail = asyncHandler(async (req, res) => {
     try {
