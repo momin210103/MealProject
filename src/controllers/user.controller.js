@@ -122,7 +122,8 @@ const registerUser = asyncHandler(async (req, res) => {
         const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
         const verificationLink = `${CLIENT_URL}/verify-email?email=${email}&code=${verificationCode}`
 
-       await transporter.sendMail({
+        try {
+        let info = await transporter.sendMail({
         from:'"MealPlaner"<momincse13@gmail.com>',
         to: email,
         subject: "Email Verification",
@@ -130,7 +131,13 @@ const registerUser = asyncHandler(async (req, res) => {
                <p>Your verification code is: <b>${verificationCode}</b></p>
                <p>Click Here for Verify<a href="${verificationLink}">here</a> to verify your email.</p>`,
     
-    });
+            });
+            console.log("Email sent: ", info);
+        } catch (error) {
+            console.error("Error sending email: ", error);
+        }
+        
+        
             
 
         if(!createdUser){
@@ -141,7 +148,7 @@ const registerUser = asyncHandler(async (req, res) => {
             new ApiResponse(200,createdUser,"User Register successfully")
         )
 
-})
+});
 
 
 const verifyEmail = asyncHandler(async (req, res) => {
