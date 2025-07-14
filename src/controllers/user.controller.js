@@ -119,8 +119,8 @@ const registerUser = asyncHandler(async (req, res) => {
             pass:process.env.EMAIL_PASS
            }
         })
-        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-        const verificationLink = `${clientUrl}/verify-email?email=${email}&code=${verificationCode}`;
+        const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+        const verificationLink = `${CLIENT_URL}/verify-email?email=${email}&code=${verificationCode}`
 
        await transporter.sendMail({
         from:'"MealPlaner"<momincse13@gmail.com>',
@@ -128,7 +128,7 @@ const registerUser = asyncHandler(async (req, res) => {
         subject: "Email Verification",
         html: `<p>Hello ${fullName},</p>
                <p>Your verification code is: <b>${verificationCode}</b></p>
-               <p>Click Here for Verify <a href="${verificationLink}">here</a> to verify your email.</p>`,
+               <p">Click Here for Verify<a href="${verificationLink}">here</a> to verify your email.</p>`,
     
     });
             
