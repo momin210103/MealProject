@@ -128,7 +128,7 @@ const registerUser = asyncHandler(async (req, res) => {
         subject: "Email Verification",
         html: `<p>Hello ${fullName},</p>
                <p>Your verification code is: <b>${verificationCode}</b></p>
-               <p">Click Here for Verify<a href="${verificationLink}">here</a> to verify your email.</p>`,
+               <p>Click Here for Verify<a href="${verificationLink}">here</a> to verify your email.</p>`,
     
     });
             
@@ -146,6 +146,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const verifyEmail = asyncHandler(async (req, res) => {
     try {
         const { email, code } = req.body;
+        console.log("Email:", email, "Code:", code);
 
         if (!email || !code) {
             throw new ApiError(400, "Email or verification code missing");
