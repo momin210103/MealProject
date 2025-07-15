@@ -119,7 +119,7 @@ const registerUser = asyncHandler(async (req, res) => {
             pass:process.env.EMAIL_PASS
            }
         })
-        const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+        const CLIENT_URL = process.env.CLIENT_URL;
         const verificationLink = `${CLIENT_URL}/verify-email?email=${email}&code=${verificationCode}`
 
        await transporter.sendMail({
@@ -161,8 +161,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
         if (!user.verificationCode) {
             throw new ApiError(400, "No verification code found for this user");
         }
+        const cleanCode = decodeURIComponent(code).trim();
+        const userCode = user.verificationCode.toString().trim();
 
-        if (user.verificationCode !== code) {
+        if (cleanCode !== userCode) {
             throw new ApiError(400, "Invalid verification code");
         }
 
