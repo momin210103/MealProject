@@ -1,6 +1,6 @@
 import express from "express";
 import SSLCommerzPayment from "sslcommerz-lts";
-import { verifyJWT } from "../middlewares/auth.middleware";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
