@@ -1,18 +1,19 @@
 import express from "express";
 import SSLCommerzPayment from "sslcommerz-lts";
+import { verifyJWT } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
-router.post("/initiate", async (req, res) => {
+router.post("/initiate", verifyJWT,async (req, res) => {
   const { amount, customerName, customerEmail, customerPhone } = req.body;
 
   const data = {
     total_amount: amount,
     currency: "BDT",
     tran_id: `TRX-${Date.now()}`,
-    success_url: "https://your-frontend-live.com/payment-success",
-    fail_url: "https://your-frontend-live.com/payment-fail",
-    cancel_url: "https://your-frontend-live.com/payment-cancel",
+    success_url: "https://mealplannerclient.onrender.com/payment-success",
+    fail_url: "https://mealplannerclient.onrender.com/payment-fail",
+    cancel_url: "https://mealplannerclient.onrender.com/payment-cancel",
     product_name: "Meal Balance Add",
     cus_name: customerName,
     cus_email: customerEmail,
